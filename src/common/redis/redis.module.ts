@@ -21,7 +21,22 @@ export class RedisModule {
             host: redisConfig.host,
             port: redisConfig.port,
             db: c.db ?? redisConfig.dbs.default,
+            lazyConnect: true,
           });
+
+          // Attach error handler to prevent unhandled error events
+          r.on('error', (err) => {
+            // In production you'd use a logger; for now, print a message
+            // but don't crash the process on DNS/connection errors.
+            // eslint-disable-next-line no-console
+            console.warn(`[ioredis] client (${c.name}) error:`, err && err.message ? err.message : err);
+          });
+
+          // Try to connect but don't block if redis host is unreachable.
+          r.connect().catch(() => {
+            // suppress connect error; 'error' handler above will report it
+          });
+
           return r;
         },
       };

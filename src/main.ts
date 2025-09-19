@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { log } from 'console';
