@@ -51,4 +51,13 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
     return this.repo.remove(user);
   }
+
+  async updateEmailVerified(email: string, isVerified: boolean): Promise<void> {
+    const user = await this.repo.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.is_email_verified = isVerified;
+    await this.repo.save(user);
+  }
 }

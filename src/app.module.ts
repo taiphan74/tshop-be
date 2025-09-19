@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import typeOrmConfig from './config/typeorm.config';
 import { AuthModule } from './auth/auth.module';
+import { MailerModule } from './mailer/mailer.module';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { AuthModule } from './auth/auth.module';
       }),
     }),
     AuthModule,
+    MailerModule,
+    OtpModule,
   ],
 })
 export class AppModule {}

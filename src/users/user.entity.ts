@@ -43,4 +43,7 @@ export class User {
 
   @Column({ name: 'last_login', type: 'timestamp', nullable: true })
   last_login: Date;
+
+  @Column({ name: 'is_email_verified', default: false })
+  is_email_verified: boolean;
 }

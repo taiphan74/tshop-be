@@ -126,4 +126,16 @@ export class AuthController {
     res.clearCookie('refreshToken');
     return { message: 'Logged out' };
   }
+
+  @Post('verify-email')
+  async sendEmailVerification(@Body() body: { email: string }) {
+    await this.authService.sendEmailVerification(body.email);
+    return { message: 'OTP sent to email' };
+  }
+
+  @Post('verify-email/confirm')
+  async verifyEmail(@Body() body: { email: string; otp: string }) {
+    const success = await this.authService.verifyEmail(body.email, body.otp);
+    return { success, message: success ? 'Email verified' : 'Invalid OTP' };
+  }
 }

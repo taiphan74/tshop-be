@@ -9,6 +9,7 @@ import { JwtService } from './jwt.service';
 import Redis from 'ioredis';
 import { REDIS_CLIENTS } from '../common/redis/redis.module';
 import * as bcrypt from 'bcrypt';
+import { OtpService } from '../otp/otp.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly jwtService: NestJwtService,
     private readonly jwtServiceWrapper: JwtService,
     @Inject('REDIS_CLIENT_AUTH') private readonly redisClient: Redis,
+    private readonly otpService: OtpService,
   ) {}
 
   async signup(dto: SignUpDto) {
@@ -88,5 +90,18 @@ export class AuthService {
     } catch (e) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async sendEmailVerification(email: string): Promise<void> {
+    await this.otpService.sendOtp(email, 5); // Gửi OTP 5 phút
+  }
+
+  async verifyEmail(email: string, otp: string): Promise<boolean> {
+    const isValid = await this.otpService.verifyOtp(email, otp);
+    if (isValid) {
+      await this.usersService.updateEmailVerified(email, true);
+      return true;
+    }
+    return false;
   }
 }

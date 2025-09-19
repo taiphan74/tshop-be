@@ -10,6 +10,7 @@ import { UsersModule } from '../users/user.module';
 import { jwtConstants } from './auth.constants';
 import { RedisModule } from '../common/redis/redis.module';
 import { redisConfig } from '../config/redis.config';
+import { OtpModule } from '../otp/otp.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { redisConfig } from '../config/redis.config';
     RedisModule.forRoot([
       { name: 'auth', db: redisConfig.dbs.auth },
     ]),
+    OtpModule,
   ],
   providers: [AuthService, JwtStrategy, LocalStrategy, JwtService],
   controllers: [AuthController],
