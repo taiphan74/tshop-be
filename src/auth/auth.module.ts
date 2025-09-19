@@ -8,6 +8,8 @@ import { AuthController } from './auth.controller';
 import { JwtService } from './jwt.service';
 import { UsersModule } from '../users/user.module';
 import { jwtConstants } from './auth.constants';
+import { RedisModule } from '../common/redis/redis.module';
+import { redisConfig } from '../config/redis.config';
 
 @Module({
   imports: [
@@ -17,6 +19,9 @@ import { jwtConstants } from './auth.constants';
       signOptions: { expiresIn: jwtConstants.expiresIn },
     }),
     UsersModule,
+    RedisModule.forRoot([
+      { name: 'auth', db: redisConfig.dbs.auth },
+    ]),
   ],
   providers: [AuthService, JwtStrategy, LocalStrategy, JwtService],
   controllers: [AuthController],
