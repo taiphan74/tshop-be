@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -34,9 +36,11 @@ async function bootstrap() {
     });
   }
 
+  // register global interceptor
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
   await app.listen(process.env.PORT ?? 3000);
-  const url = await app.getUrl();
-  const port = process.env.PORT ?? 31111;
+  const port = process.env.PORT ?? 3000;
   console.log(`Application running at: http://localhost:${port}`);
 }
 
