@@ -8,6 +8,12 @@ import { SignUpDto } from './dto/signup.dto';
 import { SigninDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UnauthorizedException } from '@nestjs/common';
+import { UserDto } from '../users/dto/user.dto';
+
+export interface AuthResponse {
+  user: UserDto;
+  access_token: string;
+}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -29,8 +35,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new account' })
   @ApiBody({ type: SignUpDto })
   @ApiResponse({ status: 201, description: 'Registration successful' })
-  @Post('signup')
-  async signup(@Body() dto: SignUpDto, @Res({ passthrough: true }) res: Response) {
+  @Post('sign-up')
+  async signup(@Body() dto: SignUpDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     const result = await this.authService.signup(dto);
     if (result.refresh_token) {
       res.cookie('refreshToken', result.refresh_token, {
@@ -50,23 +56,26 @@ export class AuthController {
   @ApiBody({ type: SigninDto })
   @ApiResponse({ status: 201, description: 'Sign in successful' })
   @UseGuards(LocalAuthGuard)
-  @Post('signin')
+  @Post('sign-in')
   async signin(
-    @Req() req: Request & { user?: any },
+    @Req() req: Request & { user?: UserDto },
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const user = req.user;
+  ): Promise<AuthResponse> {
+    const user = req.user as UserDto;
     const tokens = await this.authService.signin(user);
 
     // Set refresh token as HttpOnly cookie
+    // compute TTL in ms from refresh expiry seconds
+    const ttlMs = this.authService['_refreshExpiresSeconds']() * 1000;
+
     res.cookie('refreshToken', tokens.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' ? true : false, // dev: false, prod: true
       sameSite: 'lax',
-      maxAge: 0, // leave to client expiration from token
+      maxAge: ttlMs, // milliseconds
     });
 
-    return { access_token: tokens.access_token };
+    return { user, access_token: tokens.access_token };
   }
 
   @ApiOperation({ summary: 'Refresh access token' })

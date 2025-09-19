@@ -1,6 +1,4 @@
-
-
-import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Inject, ConflictException } from '@nestjs/common';
 import { SignUpDto } from './dto/signup.dto';
 import { SigninDto } from './dto/login.dto';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
@@ -23,27 +21,21 @@ export class AuthService {
 
   async signup(dto: SignUpDto) {
     const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) {
-      return { message: 'Email already registered' };
-    }
-
+    
     const created = await this.usersService.create({
       email: dto.email,
       password: dto.password,
     });
 
-    const { password_hash, ...user } = created as any;
+    const { password_hash, ...user } = created;
     const payload = { email: user.email, sub: user.user_id };
     const accessToken = this.jwtServiceWrapper.signAccess(payload);
     const refreshToken = this.jwtServiceWrapper.signRefresh(payload);
 
-    // store refresh token in redis
     try {
       const key = `refresh:${user.user_id}`;
       await this.redisClient.set(key, refreshToken, 'EX', this._refreshExpiresSeconds());
-    } catch (e) {
-      // don't block signup if redis fails, but log in real app
-    }
+    } catch (e) {}
 
     return {
       user,
@@ -66,7 +58,6 @@ export class AuthService {
     const accessToken = this.jwtServiceWrapper.signAccess(payload);
     const refreshToken = this.jwtServiceWrapper.signRefresh(payload);
 
-    // persist refresh token to redis
     try {
       const key = `refresh:${user.user_id}`;
       await this.redisClient.set(key, refreshToken, 'EX', this._refreshExpiresSeconds());
@@ -88,7 +79,6 @@ export class AuthService {
       if (!stored) throw new UnauthorizedException('Refresh token not found');
       if (stored !== oldRefresh) throw new UnauthorizedException('Refresh token mismatch');
 
-      // rotate tokens: issue new access and refresh, persist new refresh
       const payload = { email: decoded.email, sub: userId };
       const accessToken = this.jwtServiceWrapper.signAccess(payload);
       const refreshToken = this.jwtServiceWrapper.signRefresh(payload);
