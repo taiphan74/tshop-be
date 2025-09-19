@@ -8,8 +8,8 @@ export enum Gender {
 
 @Entity({ name: 'users' })
 export class User {
-  @PrimaryGeneratedColumn({ name: 'user_id' })
-  user_id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'user_id' })
+  user_id: string;
 
   @Column({ unique: true })
   email: string;
@@ -41,6 +41,6 @@ export class User {
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 
-  @Column({ name: 'last_login', type: 'datetime', nullable: true })
+  @Column({ name: 'last_login', type: 'timestamp', nullable: true })
   last_login: Date;
 }

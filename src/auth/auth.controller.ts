@@ -6,7 +6,9 @@ import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/signup.dto';
 import { SigninDto } from './dto/login.dto';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -16,13 +18,16 @@ export class AuthController {
 
   // Signup with email + password
   /**
-   * Đăng ký tài khoản mới
+   * Register a new account
    * @returns {
-   *   user: Thông tin user (không có password_hash),
+   *   user: User information (without password_hash),
    *   access_token: JWT,
    *   refresh_token: JWT
    * }
    */
+  @ApiOperation({ summary: 'Register a new account' })
+  @ApiBody({ type: SignUpDto })
+  @ApiResponse({ status: 201, description: 'Registration successful' })
   @Post('signup')
   async signup(@Body() dto: SignUpDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.signup(dto);
@@ -40,6 +45,9 @@ export class AuthController {
     };
   }
 
+  @ApiOperation({ summary: 'Sign in' })
+  @ApiBody({ type: SigninDto })
+  @ApiResponse({ status: 201, description: 'Sign in successful' })
   @UseGuards(LocalAuthGuard)
   @Post('signin')
   async signin(

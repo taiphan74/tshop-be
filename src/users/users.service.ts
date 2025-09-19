@@ -26,7 +26,7 @@ export class UsersService {
     return this.repo.find();
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.repo.findOne({ where: { user_id: id } });
   }
 
@@ -34,14 +34,14 @@ export class UsersService {
     return this.repo.findOne({ where: { email } });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
     Object.assign(user, updateUserDto);
     return this.repo.save(user);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
     return this.repo.remove(user);
