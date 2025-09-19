@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/signup.dto';
 import { SigninDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { UnauthorizedException } from '@nestjs/common';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -66,5 +67,54 @@ export class AuthController {
     });
 
     return { access_token: tokens.access_token };
+  }
+
+  @ApiOperation({ summary: 'Refresh access token' })
+  @Post('refresh')
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // try cookie first
+    const cookie = req.cookies?.refreshToken as string | undefined;
+    const bodyToken = (req.body && (req.body.refresh_token || req.body.refreshToken)) as string | undefined;
+    const token = cookie ?? bodyToken;
+    if (!token) throw new UnauthorizedException('Missing refresh token');
+
+    const tokens = await this.authService.refreshToken(token);
+
+    // rotate cookie
+    res.cookie('refreshToken', tokens.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+    });
+
+    return { access_token: tokens.access_token };
+  }
+
+  @ApiOperation({ summary: 'Logout (revoke refresh token)' })
+  @Post('logout')
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const cookie = req.cookies?.refreshToken as string | undefined;
+    if (cookie) {
+      try {
+        // reuse refreshToken verification to get user id
+        const decoded = this.authService['jwtServiceWrapper']?.verifyRefresh(cookie) as any;
+        if (decoded && decoded.sub) {
+          // delete key
+          const userId = decoded.sub;
+          const key = `refresh:${userId}`;
+          // direct redis access via authService
+          try {
+            await (this.authService as any).redisClient.del(key);
+          } catch (e) {}
+        }
+      } catch (e) {}
+    }
+
+    res.clearCookie('refreshToken');
+    return { message: 'Logged out' };
   }
 }
