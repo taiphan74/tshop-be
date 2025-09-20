@@ -3,9 +3,10 @@ import type { Response, Request } from 'express';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/signup.dto';
 import { SigninDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UnauthorizedException } from '@nestjs/common';
 import { UserDto } from '../users/dto/user.dto';
@@ -23,15 +24,6 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
-  // Signup with email + password
-  /**
-   * Register a new account
-   * @returns {
-   *   user: User information (without password_hash),
-   *   access_token: JWT,
-   *   refresh_token: JWT
-   * }
-   */
   @ApiOperation({ summary: 'Register a new account' })
   @ApiBody({ type: SignUpDto })
   @ApiResponse({ status: 201, description: 'Registration successful' })
@@ -64,15 +56,13 @@ export class AuthController {
     const user = req.user as UserDto;
     const tokens = await this.authService.signin(user);
 
-    // Set refresh token as HttpOnly cookie
-    // compute TTL in ms from refresh expiry seconds
     const ttlMs = this.authService['_refreshExpiresSeconds']() * 1000;
 
     res.cookie('refreshToken', tokens.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' ? true : false, // dev: false, prod: true
+      secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: 'lax',
-      maxAge: ttlMs, // milliseconds
+      maxAge: ttlMs,
     });
 
     return { user, access_token: tokens.access_token };
@@ -84,7 +74,6 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    // try cookie first
     const cookie = req.cookies?.refreshToken as string | undefined;
     const bodyToken = (req.body && (req.body.refresh_token || req.body.refreshToken)) as string | undefined;
     const token = cookie ?? bodyToken;
@@ -92,7 +81,6 @@ export class AuthController {
 
     const tokens = await this.authService.refreshToken(token);
 
-    // rotate cookie
     res.cookie('refreshToken', tokens.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -109,13 +97,10 @@ export class AuthController {
     const cookie = req.cookies?.refreshToken as string | undefined;
     if (cookie) {
       try {
-        // reuse refreshToken verification to get user id
         const decoded = this.authService['jwtServiceWrapper']?.verifyRefresh(cookie) as any;
         if (decoded && decoded.sub) {
-          // delete key
           const userId = decoded.sub;
           const key = `refresh:${userId}`;
-          // direct redis access via authService
           try {
             await (this.authService as any).redisClient.del(key);
           } catch (e) {}
@@ -137,5 +122,23 @@ export class AuthController {
   async verifyEmail(@Body() body: { email: string; otp: string }) {
     const success = await this.authService.verifyEmail(body.email, body.otp);
     return { success, message: success ? 'Email verified' : 'Invalid OTP' };
+  }
+
+  @ApiOperation({ summary: 'Forgot password' })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({ status: 200, description: 'OTP sent for password reset' })
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+    return { message: 'OTP đã được gửi để reset password' };
+  }
+
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const success = await this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
+    return { success, message: success ? 'Password đã được reset' : 'OTP không hợp lệ' };
   }
 }

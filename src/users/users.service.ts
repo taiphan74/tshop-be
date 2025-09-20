@@ -60,4 +60,14 @@ export class UsersService {
     user.is_email_verified = isVerified;
     await this.repo.save(user);
   }
+
+  async updatePassword(email: string, newPassword: string): Promise<void> {
+    const user = await this.repo.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password_hash = hashed;
+    await this.repo.save(user);
+  }
 }

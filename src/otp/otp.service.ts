@@ -2,6 +2,8 @@ import { Injectable, Inject } from '@nestjs/common';
 import Redis from 'ioredis';
 import { ConfigService } from '@nestjs/config';
 import { MailerService } from '../mailer/mailer.service';
+import { OtpReason } from './dto/otp-reason.enum';
+import { generateOtp } from '../algorithms/generateOtp';
 
 @Injectable()
 export class OtpService {
@@ -11,18 +13,13 @@ export class OtpService {
         private readonly configService: ConfigService,
     ) {}
 
-    private generateOtp(): string {
-        return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-
-    async sendOtp(email: string, expiresInMinutes?: number): Promise<void> {
-        // Nếu không truyền expiresInMinutes, sử dụng giá trị từ env (mặc định 5 phút)
+    async sendOtp(email: string, reason: OtpReason, expiresInMinutes?: number): Promise<void> {
         const otpExpiresInMinutes = expiresInMinutes || this.configService.get<number>('OTP_EXPIRES_IN_MINUTES', 5);
         
-        const otp = this.generateOtp();
+        const otp = generateOtp();
         const expiresAt = new Date(Date.now() + otpExpiresInMinutes * 60 * 1000);
 
-        const key = `otp:${email}`;
+        const key = `otp:${reason}:${email}`;
         const value = JSON.stringify({ otp, expiresAt: expiresAt.toISOString() });
 
         try {
@@ -49,8 +46,8 @@ export class OtpService {
         await this.mailerService.sendMail(email, subject, text, html);
     }
 
-    async verifyOtp(email: string, otp: string): Promise<boolean> {
-        const key = `otp:${email}`;
+    async verifyOtp(email: string, otp: string, reason: OtpReason): Promise<boolean> {
+        const key = `otp:${reason}:${email}`;
 
         try {
             const storedValue = await this.redisClient.get(key);
@@ -78,8 +75,8 @@ export class OtpService {
         }
     }
 
-    async clearOtp(email: string): Promise<void> {
-        const key = `otp:${email}`;
+    async clearOtp(email: string, reason: OtpReason): Promise<void> {
+        const key = `otp:${reason}:${email}`;
         try {
             await this.redisClient.del(key);
         } catch (error) {
@@ -87,8 +84,8 @@ export class OtpService {
         }
     }
 
-    async hasActiveOtp(email: string): Promise<boolean> {
-        const key = `otp:${email}`;
+    async hasActiveOtp(email: string, reason: OtpReason): Promise<boolean> {
+        const key = `otp:${reason}:${email}`;
 
         try {
             const storedValue = await this.redisClient.get(key);
