@@ -11,6 +11,7 @@ import { jwtConstants } from './auth.constants';
 import { RedisModule } from '../common/redis/redis.module';
 import { redisConfig } from '../config/redis.config';
 import { OtpModule } from '../otp/otp.module';
+import { RoleGuard } from './guards/role.guard';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { OtpModule } from '../otp/otp.module';
     ]),
     OtpModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, JwtService],
+  providers: [AuthService, JwtStrategy, LocalStrategy, JwtService, RoleGuard],
   controllers: [AuthController],
   exports: [AuthService, JwtService],
 })
