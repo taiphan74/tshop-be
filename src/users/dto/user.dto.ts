@@ -1,5 +1,5 @@
 import { IsEmail, IsOptional, IsString, IsEnum, IsDateString } from 'class-validator';
-import { Gender } from '../user.entity';
+import { Gender, UserRole } from '../user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserDto {
@@ -38,6 +38,11 @@ export class UserDto {
 
   @ApiProperty({ default: false })
   is_email_verified: boolean;
+
+  @IsOptional()
+  @IsEnum(UserRole)
+  @ApiProperty({ enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 
   created_at?: Date;
   last_login?: Date;

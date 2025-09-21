@@ -30,7 +30,7 @@ export class AuthService {
     await this.sendEmailVerification(dto.email);
 
     const { password_hash, ...user } = created;
-    const payload = { email: user.email, sub: user.user_id };
+    const payload = { email: user.email, sub: user.user_id, role: user.role };
     const accessToken = this.jwtServiceWrapper.signAccess(payload);
     const refreshToken = this.jwtServiceWrapper.signRefresh(payload);
 
@@ -57,7 +57,7 @@ export class AuthService {
   }
 
   async signin(user: any) {
-    const payload = { email: user.email, sub: user.user_id };
+    const payload = { email: user.email, sub: user.user_id, role: user.role };
     const accessToken = this.jwtServiceWrapper.signAccess(payload);
     const refreshToken = this.jwtServiceWrapper.signRefresh(payload);
 
@@ -82,7 +82,7 @@ export class AuthService {
       if (!stored) throw new UnauthorizedException('Refresh token not found');
       if (stored !== oldRefresh) throw new UnauthorizedException('Refresh token mismatch');
 
-      const payload = { email: decoded.email, sub: userId };
+      const payload = { email: decoded.email, sub: userId, role: decoded.role };
       const accessToken = this.jwtServiceWrapper.signAccess(payload);
       const refreshToken = this.jwtServiceWrapper.signRefresh(payload);
       await this.redisClient.set(key, refreshToken, 'EX', this._refreshExpiresSeconds());

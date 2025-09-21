@@ -6,6 +6,11 @@ export enum Gender {
   OTHER = 'other',
 }
 
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}
+
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid', { name: 'user_id' })
@@ -46,4 +51,7 @@ export class User {
 
   @Column({ name: 'is_email_verified', default: false })
   is_email_verified: boolean;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 }
