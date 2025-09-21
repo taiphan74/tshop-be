@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User, UserRole } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -13,8 +13,9 @@ export class UsersService {
     private readonly repo: Repository<User>,
   ) {}
 
-  async create(createUserDto: { email: string; password: string }) {
+  async create(createUserDto: CreateUserDto) {
     const existing = await this.repo.findOne({ where: { email: createUserDto.email } });
+
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -22,10 +23,11 @@ export class UsersService {
     const user = this.repo.create({
       email: createUserDto.email,
       password_hash: hashed,
+      role: UserRole.USER,
     });
     
     return this.repo.save(user);
-  }
+  } 
 
   findAll() {
     return this.repo.find();
@@ -46,10 +48,10 @@ export class UsersService {
     return this.repo.save(user);
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
     if (!user) throw new NotFoundException('User not found');
-    return this.repo.remove(user);
+    await this.repo.remove(user);
   }
 
   async updateEmailVerified(email: string, isVerified: boolean): Promise<void> {
