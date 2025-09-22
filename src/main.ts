@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { log } from 'console';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -42,10 +43,17 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
   // parse cookies so controllers can read refresh token cookie
   app.use(cookieParser());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
   await app.listen(process.env.PORT ?? 3000);
   const port = process.env.PORT ?? 3000;
   console.log(`Application running at: http://localhost:${port}`);
+  console.log('DB Config:', {
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'tshop',
+});
+
 }
 
 bootstrap();

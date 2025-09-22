@@ -3,7 +3,7 @@ services:
   db:
     image: postgres:15-alpine
     ports:
-      - 5433:5432
+      - 5432:5432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -18,6 +18,18 @@ services:
     restart: unless-stopped
     ports:
       - 6379:6379
+    networks:
+      - tshop-net
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@tshop.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
     networks:
       - tshop-net
 
