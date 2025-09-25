@@ -1,40 +1,91 @@
 version: '3.8'
 services:
-  db:
-    image: postgres:15-alpine
+  app:  # NestJS app
+    build: .  # Từ Dockerfile
     ports:
-      - 5432:5432
+      - "${PORT:-3000}:3000"  # Expose port từ .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tshop
+      - NODE_ENV=production  # Prod mode
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-tshop}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}  # Từ .env, không hardcode
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
     volumes:
-      - db-data:/var/lib/postgresql/data
-    networks:
-      - tshop-net
-
-  redis:
-    image: redis:7-alpine
+      - .:/app  # Mount source cho dev (bỏ ở prod)
+      - /app/node_modules  # Avoid override node_modules
+    depends_on:
+      db:
+        condition: service_healthy  # Chờ DB ready
+      redis:
+        condition: service_healthy
     restart: unless-stopped
-    ports:
-      - 6379:6379
     networks:
       - tshop-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  pgadmin:
+  db:  # Postgres
+    image: postgres:16-alpine  # Update version mới
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-tshop}
+    volumes:
+      - db-data:/var/lib/postgresql/data  # Persistent
+    ports:
+      - "5432:5432"  # Chỉ dev, bỏ ở prod
+    networks:
+      - tshop-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-tshop}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:  # Redis
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data  # Persistent
+    ports:
+      - "6379:6379"  # Chỉ dev
+    networks:
+      - tshop-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  pgadmin:  # Chỉ dev, optional
     image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@tshop.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@tshop.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
     ports:
       - "8080:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin  # Persistent config
     networks:
       - tshop-net
+    restart: unless-stopped
 
 volumes:
   db-data:
+  redis-data:
+  pgadmin-data:
 
 networks:
   tshop-net:

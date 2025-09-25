@@ -3,7 +3,6 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
-  OTHER = 'other',
 }
 
 export enum UserRole {
