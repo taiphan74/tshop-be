@@ -29,17 +29,17 @@ export class OtpService {
             throw new Error('Unable to store OTP');
         }
 
-        const subject = 'Mã OTP xác thực';
-        const text = `Mã OTP của bạn là: ${otp}. Mã này sẽ hết hạn sau ${otpExpiresInMinutes} phút.`;
+        const subject = 'OTP Verification Code';
+        const text = `Your OTP code is: ${otp}. This code will expire in ${otpExpiresInMinutes} minutes.`;
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2>Mã OTP xác thực</h2>
-                <p>Mã OTP của bạn là:</p>
+                <h2>OTP Verification Code</h2>
+                <p>Your OTP code is:</p>
                 <div style="font-size: 24px; font-weight: bold; color: #007bff; text-align: center; padding: 20px; border: 2px solid #007bff; border-radius: 5px;">
                     ${otp}
                 </div>
-                <p>Mã này sẽ hết hạn sau <strong>${otpExpiresInMinutes} phút</strong>.</p>
-                <p>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.</p>
+                <p>This code will expire in <strong>${otpExpiresInMinutes} minutes</strong>.</p>
+                <p>If you did not request this code, please ignore this email.</p>
             </div>
         `;
 

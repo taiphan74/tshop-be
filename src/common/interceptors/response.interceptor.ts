@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  HttpException,
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -26,13 +27,15 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, StandardRespon
         timestamp: new Date().toISOString(),
       })),
       catchError((error) => {
-        return throwError(() => ({
+        const status = error.status || 500;
+        const message = error.message || 'An error occurred';
+        return throwError(() => new HttpException({
           success: false,
-          error: error.message || error,
-          message: error.message || 'An error occurred',
-          code: error.status || 500,
+          error: message,
+          message,
+          code: status,
           timestamp: new Date().toISOString(),
-        }));
+        }, status));
       }),
     );
   }

@@ -130,7 +130,7 @@ export class AuthController {
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
-    return { message: 'OTP đã được gửi để reset password' };
+    return { message: 'OTP has been sent to reset password' };
   }
 
   @ApiOperation({ summary: 'Reset password' })
@@ -139,6 +139,6 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     const success = await this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
-    return { success, message: success ? 'Password đã được reset' : 'OTP không hợp lệ' };
+    return { success, message: success ? 'Password has been reset' : 'Invalid OTP' };
   }
 }

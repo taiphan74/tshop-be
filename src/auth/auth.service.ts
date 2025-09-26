@@ -110,7 +110,7 @@ export class AuthService {
   async forgotPassword(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new NotFoundException('Email không tồn tại');
+      throw new NotFoundException('Email does not exist');
     }
 
     await this.otpService.sendOtp(email, OtpReason.FORGOT_PASSWORD, 5);
