@@ -1,38 +1,6 @@
 version: '3.8'
 services:
-  app:  # NestJS app
-    build: .  # Từ Dockerfile
-    ports:
-      - "${PORT:-3000}:3000"  # Expose port từ .env
-    environment:
-      - NODE_ENV=production  # Prod mode
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - DB_NAME=${DB_NAME:-tshop}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET}  # Từ .env, không hardcode
-      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
-    volumes:
-      - .:/app  # Mount source cho dev (bỏ ở prod)
-      - /app/node_modules  # Avoid override node_modules
-    depends_on:
-      db:
-        condition: service_healthy  # Chờ DB ready
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - tshop-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  db:  # Postgres
+  postgres:  # Postgres
     image: postgres:16-alpine  # Update version mới
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -51,7 +19,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  redis:  # Redis
+  redis-server:  # Redis
     image: redis:7-alpine
     volumes:
       - redis-data:/data  # Persistent
@@ -66,26 +34,9 @@ services:
       retries: 5
     restart: unless-stopped
 
-  pgadmin:  # Chỉ dev, optional
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@tshop.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
-    ports:
-      - "8080:80"
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin  # Persistent config
-    networks:
-      - tshop-net
-    restart: unless-stopped
-
 volumes:
   db-data:
   redis-data:
-  pgadmin-data:
 
 networks:
   tshop-net:
