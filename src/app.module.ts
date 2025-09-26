@@ -5,6 +5,8 @@ import typeOrmConfig from './config/typeorm.config';
 import { AuthModule } from './auth/auth.module';
 import { MailerModule } from './mailer/mailer.module';
 import { OtpModule } from './otp/otp.module';
+import { UsersModule } from './users/users.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { OtpModule } from './otp/otp.module';
     AuthModule,
     MailerModule,
     OtpModule,
+    UsersModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}
