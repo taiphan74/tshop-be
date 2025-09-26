@@ -50,9 +50,9 @@ export class AuthService {
     console.log('Validating user:', email);
     const user = await this.usersService.findByEmail(email);
     console.log('User found:', user);
-    if (!user) return null;
+    if (!user) throw new NotFoundException('User not found');
     const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return null;
+    if (!match) throw new UnauthorizedException('Invalid password');
     const { password_hash, ...result } = user;
     return result;
   }
