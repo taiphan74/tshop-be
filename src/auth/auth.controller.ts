@@ -7,6 +7,7 @@ import { SignUpDto } from './dto/signup.dto';
 import { SigninDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyForgotPasswordDto } from './dto/verify-forgot-password.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UnauthorizedException } from '@nestjs/common';
 import { UserDto } from '../users/dto/user.dto';
@@ -131,6 +132,15 @@ export class AuthController {
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
     return { message: 'OTP has been sent to reset password' };
+  }
+
+  @ApiOperation({ summary: 'Verify OTP for forgot password' })
+  @ApiBody({ type: VerifyForgotPasswordDto })
+  @ApiResponse({ status: 200, description: 'OTP verification result' })
+  @Post('forgot-password/verify')
+  async verifyForgotPasswordOtp(@Body() dto: VerifyForgotPasswordDto) {
+    const success = await this.authService.verifyForgotPasswordOtp(dto.email, dto.otp);
+    return { success, message: success ? 'OTP verified' : 'Invalid OTP' };
   }
 
   @ApiOperation({ summary: 'Reset password' })

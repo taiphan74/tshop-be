@@ -124,4 +124,8 @@ export class AuthService {
     }
     return false;
   }
+
+  async verifyForgotPasswordOtp(email: string, otp: string): Promise<boolean> {
+    return await this.otpService.verifyOtp(email, otp, OtpReason.FORGOT_PASSWORD);
+  }
 }
