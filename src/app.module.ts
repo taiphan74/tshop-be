@@ -7,6 +7,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { OtpModule } from './otp/otp.module';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AppController } from './app.controller';
     MailerModule,
     OtpModule,
     UsersModule,
+    ProductsModule,
   ],
   controllers: [AppController],
 })
