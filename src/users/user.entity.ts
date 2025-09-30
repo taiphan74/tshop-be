@@ -42,6 +42,9 @@ export class User {
   @Column({ name: 'style_preference', nullable: true })
   style_preference: string;
 
+  @Column({ name: 'avatar', nullable: true })
+  avatar: string;
+
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 

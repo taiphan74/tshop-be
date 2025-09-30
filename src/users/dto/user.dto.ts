@@ -37,6 +37,10 @@ export class UserDto {
   @IsString()
   style_preference?: string;
 
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
   @ApiProperty({ default: false })
   is_email_verified: boolean;
 
