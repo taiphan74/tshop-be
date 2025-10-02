@@ -1,20 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, NotFoundException, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, NotFoundException, UseInterceptors, ClassSerializerInterceptor, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { RoleGuard } from '../auth/guards/role.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from './user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { plainToInstance } from 'class-transformer';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('users')
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
@@ -47,11 +52,15 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch('profile')
-  @ApiOperation({ summary: 'Update current user profile' })
+  @Post('upload-avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiOperation({ summary: 'Upload avatar for current user' })
+  @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 200, type: UserDto })
-  async updateProfile(@Req() req: any, @Body() updateUserDto: UpdateUserDto): Promise<UserDto> {
-    const user = await this.usersService.update(req.user.userId, updateUserDto);
+  async uploadAvatar(@Req() req: any, @UploadedFile() file: Express.Multer.File): Promise<UserDto> {
+    const serveRoot = this.configService.get<string>('UPLOAD_SERVE_ROOT', '/uploads');
+    const avatarPath = `${serveRoot}/${file.filename}`;
+    const user = await this.usersService.updateAvatar(req.user.userId, avatarPath);
     return plainToInstance(UserDto, user);
   }
 

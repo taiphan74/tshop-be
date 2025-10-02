@@ -72,4 +72,11 @@ export class UsersService {
     user.password_hash = hashed;
     await this.repo.save(user);
   }
+
+  async updateAvatar(userId: string, avatarPath: string): Promise<User> {
+    const user = await this.findOne(userId);
+    if (!user) throw new NotFoundException('User not found');
+    user.avatar = avatarPath;
+    return this.repo.save(user);
+  }
 }
