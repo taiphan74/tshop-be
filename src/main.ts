@@ -10,6 +10,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import * as fs from 'fs';
+import { AllExceptionsFilter } from './common/filters/exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -47,6 +48,8 @@ async function bootstrap() {
 
   // register global interceptor
   app.useGlobalInterceptors(new ResponseInterceptor());
+  // register global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter());
   // parse cookies so controllers can read refresh token cookie
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
