@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { plainToInstance } from 'class-transformer';
 
 export interface StandardResponse<T = any> {
   success: boolean;
@@ -21,11 +22,17 @@ export interface StandardResponse<T = any> {
 export class ResponseInterceptor<T> implements NestInterceptor<T, StandardResponse<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<StandardResponse<T>> {
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        data,
-        timestamp: new Date().toISOString(),
-      })),
+      map((data) => {
+        let serializedData = data;
+        if (data && typeof data === 'object' && data.constructor !== Object && data.constructor !== Array) {
+          serializedData = plainToInstance(data.constructor, data);
+        }
+        return {
+          success: true,
+          data: serializedData,
+          timestamp: new Date().toISOString(),
+        };
+      }),
       catchError((error) => {
         const status = error.status || 500;
         const message = error.message || 'An error occurred';

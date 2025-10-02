@@ -9,6 +9,9 @@ export class UserDto {
   @IsEmail()
   email: string;
 
+  @Exclude()
+  password_hash?: string;
+
   @IsOptional()
   @IsString()
   full_name?: string;
