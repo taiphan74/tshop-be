@@ -7,6 +7,9 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { log } from 'console';
 import { ValidationPipe } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -47,6 +50,12 @@ async function bootstrap() {
   // parse cookies so controllers can read refresh token cookie
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+
+  // Ensure uploads directory exists
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
 
   await app.listen(process.env.PORT ?? 3000);
   const port = process.env.PORT ?? 3000;

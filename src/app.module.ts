@@ -8,6 +8,9 @@ import { OtpModule } from './otp/otp.module';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { ProductsModule } from './products/products.module';
+import { UploadModule } from './upload/upload.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -26,11 +29,16 @@ import { ProductsModule } from './products/products.module';
         synchronize: true,
       }),
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     AuthModule,
     MailerModule,
     OtpModule,
     UsersModule,
     ProductsModule,
+    UploadModule,
   ],
   controllers: [AppController],
 })
