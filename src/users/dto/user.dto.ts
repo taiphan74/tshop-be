@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, IsEnum, IsDateString } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsEnum, IsDateString, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { Gender, UserRole } from '../user.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -44,6 +44,7 @@ export class UserDto {
   @IsString()
   avatar?: string;
 
+  @IsBoolean()
   @ApiProperty({ default: false })
   is_email_verified: boolean;
 
